@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="TSE-Server:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/TSE_Server_jar</output-path>
+    <root id="archive" name="TSE-Server.jar">
+      <element id="module-output" name="TSE-Server" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../../../../Program Files/AdoptOpenJDK/JDBC/OJDBC/ojdbc10.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
