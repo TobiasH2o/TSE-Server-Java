@@ -1,12 +1,24 @@
-public class MainMenu {
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.*;
+
+public class MainMenu implements ActionListener {
+
+    Timer clock = new Timer(100, this);
+    SQL sql = new SQL();
+    ConnectionManager cm;
 
     MainMenu() {
         Log.logLine("Looking for localHost SQL");
-        SQL sql = new SQL();
 
-        Log.logLine("Accepting connections");
-        ConnectionManager cm = new ConnectionManager();
+        cm = new ConnectionManager();
         cm.toggleConnection();
+
+        Log.logLine("Starting server clock");
+
+        clock.setActionCommand("tick");
+        clock.start();
+
         boolean end = false;
 
         while (!end) {
@@ -16,7 +28,7 @@ public class MainMenu {
             Log.logLine("1 - Exit Server");
             Log.logLine("2 - Current Connections");
             Log.logLine("3 - Connection Details");
-            Log.logLine("4 - Disable/Enable log-on");
+            Log.logLine("4 - Server Settings");
             String input = Log.readInput(true);
             int option = -1;
             try {
@@ -28,9 +40,12 @@ public class MainMenu {
                     end = true;
                     break;
                 case 2:
+                    cm.listConnections();
+                    break;
                 case 3:
                 case 4:
                     cm.toggleConnection();
+                    break;
             }
         }
         cm.endConnection();
@@ -39,4 +54,8 @@ public class MainMenu {
     }
 
 
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        cm.checkConnections();
+    }
 }
