@@ -5,10 +5,8 @@ import java.util.Objects;
 
 public class MainMenu{
 
-    int heartBeat = 0;
-    boolean development = true;
-    SQL sql = new SQL();
-    ConnectionManager cm;
+    private boolean development = true;
+    private final ConnectionManager cm;
 
     MainMenu() {
         Log.logLine("Looking for localHost SQL");
@@ -20,7 +18,7 @@ public class MainMenu{
 
         boolean end = false;
 
-        if(!sql.makeConnection() && ! development){
+    if(!new SQL().makeConnection() && ! development){
             end = true;
             Log.logLine("Critical error occurred when connecting to the database");
         }
@@ -31,6 +29,7 @@ public class MainMenu{
             Log.logLine("1 - Exit Server");
             Log.logLine("2 - Current Connections");
             Log.logLine("3 - Server Settings");
+            Log.logLine("4 - Remove dead connections");
             String input = Log.readInput(true);
             int option = -1;
             try {
@@ -46,6 +45,9 @@ public class MainMenu{
                     break;
                 case 3:
                     subMenu();
+                    break;
+                case 4:
+                    cm.forceRemoveDead();
                     break;
             }
         }

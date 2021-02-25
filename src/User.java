@@ -9,17 +9,16 @@ import javax.swing.Timer;
 
 public class User implements ActionListener {
 
-    Socket userSocket;
-    Timer selfUpdater = new Timer(100, this);
-    int userID;
-    String userName = "";
-    String password = "";
-    Thread sendThread;
-    Sender sender;
-    Receiver receiver;
-    Commands com = new Commands();
-    boolean loggedOn = false;
-    boolean dead = false;
+    private Socket userSocket;
+    private final Timer selfUpdater = new Timer(100, this);
+    private final Timer deathTimer = new Timer(1000, this);
+    private String userName = "";
+    private String password = "";
+    private Sender sender;
+    private Receiver receiver;
+    private final Commands com = new Commands();
+    private boolean loggedOn = false;
+    private boolean dead = false;
 
     public User(Socket userSocket) {
         try {
@@ -27,10 +26,12 @@ public class User implements ActionListener {
             sender = new Sender(new PrintWriter(userSocket.getOutputStream()));
             receiver = new Receiver(new BufferedReader(new InputStreamReader(userSocket.getInputStream())));
             sender.addText("logon");
-            sender.start();
+            sender.send();
             receiver.start();
             selfUpdater.setActionCommand("selfUpdate");
             selfUpdater.start();
+            deathTimer.setActionCommand("death");
+            deathTimer.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -42,9 +43,12 @@ public class User implements ActionListener {
 
     private void reload(){
         if (!userName.isBlank() && !password.isBlank()) {
-            userID = com.checkUser(userName, password);
-            loggedOn = true;
-            com.userOnline(userID);
+            if(com.checkUser(userName, password)) {
+                loggedOn = true;
+                com.userOnline();
+                sender.addText("confirmLog");
+                sender.send();
+            }
         }
     }
 
@@ -53,7 +57,7 @@ public class User implements ActionListener {
             Log.logLine("##################Dead#######################");
         else
             Log.logLine("##################Live#######################");
-        Log.logLine("User address " + userSocket.getLocalAddress());
+        Log.logLine("User address " + userSocket.getInetAddress());
         Log.logLine("User Name    " + userName);
     }
 
@@ -62,31 +66,30 @@ public class User implements ActionListener {
     }
 
     public void closeConnection() {
-        try {
-            userSocket.close();
-            dead = true;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public boolean checkOnline() {
-        try {
-            return userSocket.getInetAddress().isReachable(100);
-        } catch (IOException e) {
-            return false;
+        if(!dead) {
+            try {
+                dead = true;
+                selfUpdater.stop();
+                deathTimer.stop();
+                com.userOffline();
+                receiver.stopReceiving();
+                userSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     public void process(String[] text){
+        if(text.length > 0){
+            deathTimer.restart();
+        }
         for(String data : text){
             if(!loggedOn) {
                 if (data.startsWith("U")) {
-                    Log.logLine("New userName " + data);
                     userName = data.replaceFirst("U", "");
                     reload();
                 } else if (data.startsWith("P")) {
-                    Log.logLine("New password " + data);
                     password = data.replaceFirst("P", "");
                     reload();
                 }
@@ -100,9 +103,14 @@ public class User implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         String c = e.getActionCommand();
         if(c.equals("selfUpdate")){
+            if(!receiver.isAlive()){
+                closeConnection();
+            }
             receiver.stopReceiving();
             process(receiver.getText());
             receiver.start();
+        }else if(c.equals("death")){
+            closeConnection();
         }
     }
 }

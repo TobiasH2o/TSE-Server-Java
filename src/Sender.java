@@ -2,11 +2,13 @@ import java.io.PrintWriter;
 
 public class Sender implements Runnable{
 
-    PrintWriter out;
+    private final PrintWriter out;
 
-    String senderText = "";
+    private String senderText = "";
 
-    Thread senderThread;
+    private Thread senderThread;
+
+    private boolean started = false;
 
     Sender(PrintWriter out){
         this.out = out;
@@ -17,14 +19,17 @@ public class Sender implements Runnable{
     }
 
     public void send(){
-        if(senderThread.isAlive()){
-            senderThread.interrupt();
-        }
-        senderThread = new Thread(this);
-        senderThread.start();
+        if(started) {
+            if (senderThread.isAlive()) {
+                senderThread.interrupt();
+            }
+            senderThread = new Thread(this);
+            senderThread.start();
+        }else start();
     }
 
-    public void start(){
+    private void start(){
+        started = true;
         senderThread = new Thread(this);
         senderThread.start();
     }

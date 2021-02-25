@@ -1,3 +1,6 @@
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -5,9 +8,9 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 
-public class ConnectionManager implements Runnable {
+public class ConnectionManager implements Runnable, ActionListener {
 
-    ServerSocket serverSocket;
+    private ServerSocket serverSocket;
 
     {
         try {
@@ -23,7 +26,9 @@ public class ConnectionManager implements Runnable {
     Thread connector;
 
     ConnectionManager() {
-
+        Timer deathClock = new Timer(10, this);
+        deathClock.setActionCommand("checkDead");
+        deathClock.start();
     }
 
     public void flushDead(){
@@ -64,16 +69,8 @@ public class ConnectionManager implements Runnable {
     }
 
     public void removeDeadClients(){
-        int cNumb;
-        for (int i = 0; i < deadUsers.size(); i++) {
-            cNumb = deadUsers.get(i);
-            for (int k = i; k < deadUsers.size(); k++)
-                if (cNumb > deadUsers.get(k))
-                    deadUsers.set(k, deadUsers.get(k) - 1);
-            currentUsers.remove(currentUsers.get(deadUsers.get(i)));
-        }
-        //noinspection CollectionAddedToSelf
-        deadUsers.removeAll(deadUsers);
+        currentUsers.removeIf(User::isDead);
+        deadUsers.clear();
     }
 
     public void addUser(User user) {
@@ -82,7 +79,7 @@ public class ConnectionManager implements Runnable {
 
     public void checkConnections() {
         for (int i = 0; i < currentUsers.size(); i++) {
-            if (!currentUsers.get(i).checkOnline() && !currentUsers.get(i).isDead()) {
+            if (currentUsers.get(i).isDead() && !deadUsers.contains(i)) {
                 deadUsers.add(i);
                 currentUsers.get(i).closeConnection();
             }
@@ -117,5 +114,23 @@ public class ConnectionManager implements Runnable {
             connector.start();
         }
         running = !running;
+    }
+
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String c = e.getActionCommand();
+        if(c.equals("checkDead")){
+            checkConnections();
+        }
+    }
+
+    public void forceRemoveDead() {
+        if (connector.isAlive()) {
+            connector.interrupt();
+        }
+        removeDeadClients();
+        connector = new Thread(this);
+        connector.start();
     }
 }

@@ -1,51 +1,58 @@
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.ArrayList;
 
 public class Receiver implements Runnable {
 
-    BufferedReader in;
+    private final BufferedReader in;
 
-    ArrayList<String> receivedText = new ArrayList<>();
+    private ArrayList<String> receivedText = new ArrayList<>();
 
-    boolean receiving = false;
+    private boolean receiving = false;
+    private boolean alive = true;
 
-    Thread receiverThread;
+    private Thread receiverThread;
 
     Receiver(BufferedReader in) {
         this.in = in;
     }
 
     public String[] getText() {
-        String[] temp = receivedText.toArray(String[]::new);
-        receivedText.clear();
-        return temp;
+        return receivedText.toArray(String[]::new);
     }
 
-    public void stopReceiving(){
+    public void stopReceiving() {
         receiving = false;
-        if(receiverThread.isAlive()){
+        if (receiverThread.isAlive()) {
             receiverThread.interrupt();
         }
     }
 
-    public void start(){
+    public void start() {
         receiving = true;
         receiverThread = new Thread(this);
         receiverThread.start();
     }
 
+    public boolean isAlive() {
+        return alive;
+    }
+
     @Override
     public void run() {
-        while(receiving) {
+        receivedText = new ArrayList<>(0);
+        while (receiving && alive) {
             try {
                 String text = in.readLine();
                 while (text != null) {
                     receivedText.add(text);
                     text = in.readLine();
                 }
+            } catch (SocketException e) {
+                alive = false;
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.logLine("Generic Error");
             }
         }
     }

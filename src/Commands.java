@@ -1,16 +1,22 @@
-public class Commands {
+public class Commands extends SQL{
 
-    SQL sql = new SQL();
+    private int userID;
 
-    public int checkUser(String userName, String password){
+    public boolean checkUser(String userName, String password){
         if(SQL.isRunning()){
-            if(sql.validUser(userName, password))
-                return sql.getUserID(userName, password);
+            if(validUser(userName, password))
+                userID = getUserID(userName, password);
+                return true;
         }
-        return -1;
+        return false;
     }
 
-    public void userOnline(int userID) {
-        sql.updateUserStatus(userID, 1);
+    public void userOnline() {
+        updateUserStatus(userID, 1);
     }
+
+    public void userOffline(){
+        updateUserStatus(userID, 0);
+    }
+
 }

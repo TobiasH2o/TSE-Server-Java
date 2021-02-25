@@ -3,7 +3,7 @@ import java.util.ArrayList;
 
 public class SQL {
 
-    private Connection con;
+    static private Connection con;
     private final String password = "UHjSDJeJ3kFMDFxn";
     private final String username = "JavaInterface";
     private final String url = "jdbc:mysql://localhost:3306";
@@ -35,7 +35,6 @@ public class SQL {
         try {
             con = DriverManager.getConnection(url, username, password);
             for (String statement2 : statement.split(";")) {
-                Log.logLine(statement2);
                 result = _sendQuery(con, statement2.trim());
             }
         } catch (Exception e) {
