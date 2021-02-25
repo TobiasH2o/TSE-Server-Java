@@ -6,12 +6,27 @@ public class Sender implements Runnable{
 
     String senderText = "";
 
+    Thread senderThread;
+
     Sender(PrintWriter out){
         this.out = out;
     }
 
     public synchronized void addText(String text){
-        senderText += text + "#~#~#~#~#";
+        senderText += text + "\n";
+    }
+
+    public void send(){
+        if(senderThread.isAlive()){
+            senderThread.interrupt();
+        }
+        senderThread = new Thread(this);
+        senderThread.start();
+    }
+
+    public void start(){
+        senderThread = new Thread(this);
+        senderThread.start();
     }
 
     @Override

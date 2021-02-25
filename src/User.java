@@ -7,16 +7,18 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import javax.swing.Timer;
 
-public class User implements Runnable, ActionListener {
+public class User implements ActionListener {
 
-    Thread listener = new Thread(this);
-    Timer deathTimer = new Timer(100, this);
-    String dataIn = "";
     Socket userSocket;
-    String userName;
-    String password;
+    Timer selfUpdater = new Timer(100, this);
+    int userID;
+    String userName = "";
+    String password = "";
+    Thread sendThread;
     Sender sender;
     Receiver receiver;
+    Commands com = new Commands();
+    boolean loggedOn = false;
     boolean dead = false;
 
     public User(Socket userSocket) {
@@ -24,18 +26,26 @@ public class User implements Runnable, ActionListener {
             this.userSocket = userSocket;
             sender = new Sender(new PrintWriter(userSocket.getOutputStream()));
             receiver = new Receiver(new BufferedReader(new InputStreamReader(userSocket.getInputStream())));
-            sender.addText("logon-");
-            sender.run();
-            Thread.sleep(10);
-            receiver.run();
-            receiver.getText();
-        } catch (IOException | InterruptedException e) {
+            sender.addText("logon");
+            sender.start();
+            receiver.start();
+            selfUpdater.setActionCommand("selfUpdate");
+            selfUpdater.start();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public boolean isDead() {
         return dead;
+    }
+
+    private void reload(){
+        if (!userName.isBlank() && !password.isBlank()) {
+            userID = com.checkUser(userName, password);
+            loggedOn = true;
+            com.userOnline(userID);
+        }
     }
 
     public void printDetails() {
@@ -68,14 +78,31 @@ public class User implements Runnable, ActionListener {
         }
     }
 
-    @Override
-    public void run() {
-        while (true){
+    public void process(String[] text){
+        for(String data : text){
+            if(!loggedOn) {
+                if (data.startsWith("U")) {
+                    Log.logLine("New userName " + data);
+                    userName = data.replaceFirst("U", "");
+                    reload();
+                } else if (data.startsWith("P")) {
+                    Log.logLine("New password " + data);
+                    password = data.replaceFirst("P", "");
+                    reload();
+                }
+            }else{
 
+            }
         }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        String c = e.getActionCommand();
+        if(c.equals("selfUpdate")){
+            receiver.stopReceiving();
+            process(receiver.getText());
+            receiver.start();
+        }
     }
 }

@@ -46,10 +46,9 @@ public class ConnectionManager implements Runnable {
 
     @Override
     public void run() {
-        //noinspection InfiniteLoopStatement
         while (running)
             try {
-                if(!serverSocket.isClosed()) {
+                if(!serverSocket.isClosed() && SQL.isRunning()) {
                     removeDeadClients();
                     Socket clientSocket = serverSocket.accept();
                     boolean duplicate = false;

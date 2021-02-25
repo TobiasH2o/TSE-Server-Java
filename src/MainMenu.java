@@ -1,13 +1,12 @@
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.*;
 import java.util.Objects;
 
-public class MainMenu implements ActionListener {
+public class MainMenu{
 
-    final int masterHeartBeat = 30;
-    Timer clock = new Timer(100, this);
     int heartBeat = 0;
+    boolean development = true;
     SQL sql = new SQL();
     ConnectionManager cm;
 
@@ -19,10 +18,12 @@ public class MainMenu implements ActionListener {
 
         Log.logLine("Starting server clock");
 
-        clock.setActionCommand("tick");
-        clock.start();
-
         boolean end = false;
+
+        if(!sql.makeConnection() && ! development){
+            end = true;
+            Log.logLine("Critical error occurred when connecting to the database");
+        }
 
         while (!end) {
 
@@ -68,15 +69,6 @@ public class MainMenu implements ActionListener {
                     run = false;
                     break;
             }
-        }
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        heartBeat++;
-        if (heartBeat == masterHeartBeat) {
-            cm.checkConnections();
-            heartBeat = 0;
         }
     }
 }
