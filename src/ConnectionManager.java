@@ -1,11 +1,9 @@
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Objects;
+
 
 public class ConnectionManager implements Runnable {
 
@@ -19,54 +17,100 @@ public class ConnectionManager implements Runnable {
         }
     }
 
-    boolean acceptConnection = false;
-    CopyOnWriteArrayList<User> currentUsers = new CopyOnWriteArrayList<>();
+    boolean running = false;
+    ArrayList<User> currentUsers = new ArrayList<>();
+    ArrayList<Integer> deadUsers = new ArrayList<>();
     Thread connector;
 
     ConnectionManager() {
 
     }
 
+    public void flushDead(){
+        connector.interrupt();
+        connector = new Thread(this);
+    }
+
     public void listConnections() {
-        for (User user : currentUsers) {
-            user.printDetails();
-        }
+        Log.logLine("Server open on address >" + serverSocket.getLocalPort());
+        Log.logLine("Server open on IP      >" + serverSocket.getInetAddress().getHostAddress());
+        Log.logLine("Stored devices         >" + currentUsers.size());
+        Log.logLine("Living devices         >" + (currentUsers.size() - deadUsers.size()));
+        Log.logLine("Exit/Show");
+        if(Objects.requireNonNull(Log.readInput(true)).equalsIgnoreCase("Show"))
+            for (User user : currentUsers) {
+                user.printDetails();
+            }
+        Log.logLine("#############################################");
     }
 
     @Override
     public void run() {
-        while(true)
+        //noinspection InfiniteLoopStatement
+        while (true)
             try {
-                Socket clientSocket = serverSocket.accept();
-                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                currentUsers.add(new User(clientSocket, out, in));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                if(!serverSocket.isClosed()) {
+                    removeDeadClients();
+                    Socket clientSocket = serverSocket.accept();
+                    boolean duplicate = false;
+                    for (User currentUser : currentUsers) {
+                        if (currentUser.getSocket().getInetAddress().toString().equals(clientSocket.getInetAddress().toString())) {
+                          //  duplicate = true;
+                        }
+                    }
+                    if(!duplicate)
+                        addUser(new User(clientSocket));
+                }
+            } catch (IOException ignored) {}
+    }
+
+    public void removeDeadClients(){
+        int cNumb;
+        for (int i = 0; i < deadUsers.size(); i++) {
+            cNumb = deadUsers.get(i);
+            for (int k = i; k < deadUsers.size(); k++)
+                if (cNumb > deadUsers.get(k))
+                    deadUsers.set(k, deadUsers.get(k) - 1);
+            currentUsers.remove(currentUsers.get(deadUsers.get(i)));
+        }
+        //noinspection CollectionAddedToSelf
+        deadUsers.removeAll(deadUsers);
+    }
+
+    public void addUser(User user) {
+        currentUsers.add(user);
     }
 
     public void checkConnections() {
-        currentUsers.removeIf(User::checkOnline);
+        for (int i = 0; i < currentUsers.size(); i++) {
+            if (!currentUsers.get(i).checkOnline() && !currentUsers.get(i).isDead()) {
+                deadUsers.add(i);
+                currentUsers.get(i).closeConnection();
+            }
+        }
+
     }
 
-    public void endConnection() {
+    public void closeServer() {
         try {
             serverSocket.close();
+            for(User user : currentUsers){
+                user.closeConnection();
+            }
         } catch (Exception e) {
             Log.logLine(e.getMessage());
         }
-        acceptConnection = false;
+        running = false;
     }
 
-    public void toggleConnection() {
-        if (acceptConnection) {
+    public void toggleServer() {
+        if (running) {
             Log.logLine("Log-on is disabled");
         } else {
             Log.logLine("Log-on is enabled");
             connector = new Thread(this);
             connector.start();
         }
-        acceptConnection = !acceptConnection;
+        running = !running;
     }
 }

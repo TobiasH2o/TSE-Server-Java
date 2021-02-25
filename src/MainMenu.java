@@ -5,6 +5,8 @@ import javax.swing.*;
 public class MainMenu implements ActionListener {
 
     Timer clock = new Timer(100, this);
+    int heartBeat = 0;
+    final int masterHeartBeat = 30;
     SQL sql = new SQL();
     ConnectionManager cm;
 
@@ -12,7 +14,7 @@ public class MainMenu implements ActionListener {
         Log.logLine("Looking for localHost SQL");
 
         cm = new ConnectionManager();
-        cm.toggleConnection();
+        cm.toggleServer();
 
         Log.logLine("Starting server clock");
 
@@ -23,11 +25,10 @@ public class MainMenu implements ActionListener {
 
         while (!end) {
 
-            Log.readInput(false);
-            Log.logLine("SERVER MENU");
+            Log.logLine("SERVER MENU - Running " + cm.running);
             Log.logLine("1 - Exit Server");
             Log.logLine("2 - Current Connections");
-            Log.logLine("3 - Connection Details");
+            Log.logLine("3 - Force remove dead connections");
             Log.logLine("4 - Server Settings");
             String input = Log.readInput(true);
             int option = -1;
@@ -39,16 +40,17 @@ public class MainMenu implements ActionListener {
                 case 1:
                     end = true;
                     break;
+                case 3:
+                    cm.flushDead();
+                    break;
                 case 2:
                     cm.listConnections();
                     break;
-                case 3:
                 case 4:
-                    cm.toggleConnection();
                     break;
             }
         }
-        cm.endConnection();
+        cm.closeServer();
         Log.logLine("Ending connections");
         System.exit(3);
     }
@@ -56,6 +58,10 @@ public class MainMenu implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        cm.checkConnections();
+        heartBeat++;
+        if(heartBeat == masterHeartBeat) {
+            cm.checkConnections();
+            heartBeat = 0;
+        }
     }
 }
