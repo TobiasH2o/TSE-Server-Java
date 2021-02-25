@@ -1,12 +1,13 @@
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.*;
+import java.util.Objects;
 
 public class MainMenu implements ActionListener {
 
+    final int masterHeartBeat = 30;
     Timer clock = new Timer(100, this);
     int heartBeat = 0;
-    final int masterHeartBeat = 30;
     SQL sql = new SQL();
     ConnectionManager cm;
 
@@ -28,8 +29,7 @@ public class MainMenu implements ActionListener {
             Log.logLine("SERVER MENU - Running " + cm.running);
             Log.logLine("1 - Exit Server");
             Log.logLine("2 - Current Connections");
-            Log.logLine("3 - Force remove dead connections");
-            Log.logLine("4 - Server Settings");
+            Log.logLine("3 - Server Settings");
             String input = Log.readInput(true);
             int option = -1;
             try {
@@ -40,13 +40,11 @@ public class MainMenu implements ActionListener {
                 case 1:
                     end = true;
                     break;
-                case 3:
-                    cm.flushDead();
-                    break;
                 case 2:
                     cm.listConnections();
                     break;
-                case 4:
+                case 3:
+                    subMenu();
                     break;
             }
         }
@@ -55,11 +53,28 @@ public class MainMenu implements ActionListener {
         System.exit(3);
     }
 
+    public void subMenu() {
+        boolean run = true;
+        while(run){
+            Log.logLine("####### Server Settings #######");
+            if (cm.isRunning()) Log.logLine("1> Bring server offline");
+            else Log.logLine("1> Bring server online");
+            Log.logLine("2> exit");
+            switch (Objects.requireNonNull(Log.readInput(true))){
+                case "1":
+                    cm.toggleServer();
+                    break;
+                case "2":
+                    run = false;
+                    break;
+            }
+        }
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         heartBeat++;
-        if(heartBeat == masterHeartBeat) {
+        if (heartBeat == masterHeartBeat) {
             cm.checkConnections();
             heartBeat = 0;
         }

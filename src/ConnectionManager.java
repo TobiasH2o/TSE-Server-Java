@@ -47,7 +47,7 @@ public class ConnectionManager implements Runnable {
     @Override
     public void run() {
         //noinspection InfiniteLoopStatement
-        while (true)
+        while (running)
             try {
                 if(!serverSocket.isClosed()) {
                     removeDeadClients();
@@ -93,6 +93,7 @@ public class ConnectionManager implements Runnable {
 
     public void closeServer() {
         try {
+            connector.interrupt();
             serverSocket.close();
             for(User user : currentUsers){
                 user.closeConnection();
@@ -103,9 +104,14 @@ public class ConnectionManager implements Runnable {
         running = false;
     }
 
+    public boolean isRunning(){
+        return running;
+    }
+
     public void toggleServer() {
         if (running) {
             Log.logLine("Log-on is disabled");
+            connector.interrupt();
         } else {
             Log.logLine("Log-on is enabled");
             connector = new Thread(this);
