@@ -11,14 +11,14 @@ public class MainMenu{
     MainMenu() {
         Log.logLine("Looking for localHost SQL");
 
-        cm = new ConnectionManager();
+        cm = new ConnectionManager(development);
         cm.toggleServer();
 
         Log.logLine("Starting server clock");
 
         boolean end = false;
 
-    if(!new SQL().makeConnection() && ! development){
+    if(!new SQL().makeConnection() && !development){
             end = true;
             Log.logLine("Critical error occurred when connecting to the database");
         }
@@ -62,7 +62,7 @@ public class MainMenu{
             Log.logLine("####### Server Settings #######");
             if (cm.isRunning()) Log.logLine("1> Bring server offline");
             else Log.logLine("1> Bring server online");
-            Log.logLine("2> exit");
+            Log.logLine("2> back");
             switch (Objects.requireNonNull(Log.readInput(true))){
                 case "1":
                     cm.toggleServer();

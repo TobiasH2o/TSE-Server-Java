@@ -3,7 +3,7 @@
     <output-path>$PROJECT_DIR$/out/artifacts/TSE_Server_jar</output-path>
     <root id="archive" name="TSE-Server.jar">
       <element id="module-output" name="TSE-Server" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/../../../../Program Files/AdoptOpenJDK/JDBC/OJDBC/ojdbc10.jar" path-in-jar="/" />
+      <element id="library" level="project" name="ojdbc10" />
     </root>
   </artifact>
 </component>

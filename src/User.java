@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Arrays;
 import javax.swing.Timer;
 
 public class User implements ActionListener {
@@ -19,8 +20,9 @@ public class User implements ActionListener {
     private final Commands com = new Commands();
     private boolean loggedOn = false;
     private boolean dead = false;
+    private boolean development;
 
-    public User(Socket userSocket) {
+    public User(Socket userSocket, boolean development) {
         try {
             this.userSocket = userSocket;
             sender = new Sender(new PrintWriter(userSocket.getOutputStream()));
@@ -41,9 +43,9 @@ public class User implements ActionListener {
         return dead;
     }
 
-    private void reload(){
-        if (!userName.isBlank() && !password.isBlank()) {
-            if(com.checkUser(userName, password)) {
+    private void reload() {
+        if (!userName.isBlank() && !password.isBlank() && !development) {
+            if (com.checkUser(userName, password)) {
                 loggedOn = true;
                 com.userOnline();
                 sender.addText("confirmLog");
@@ -66,7 +68,7 @@ public class User implements ActionListener {
     }
 
     public void closeConnection() {
-        if(!dead) {
+        if (!dead) {
             try {
                 dead = true;
                 selfUpdater.stop();
@@ -80,12 +82,12 @@ public class User implements ActionListener {
         }
     }
 
-    public void process(String[] text){
-        if(text.length > 0){
+    public void process(String[] text) {
+        if (text.length > 0) {
             deathTimer.restart();
         }
-        for(String data : text){
-            if(!loggedOn) {
+        for (String data : text) {
+            if (!loggedOn) {
                 if (data.startsWith("U")) {
                     userName = data.replaceFirst("U", "");
                     reload();
@@ -93,7 +95,7 @@ public class User implements ActionListener {
                     password = data.replaceFirst("P", "");
                     reload();
                 }
-            }else{
+            } else {
 
             }
         }
@@ -102,14 +104,19 @@ public class User implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         String c = e.getActionCommand();
-        if(c.equals("selfUpdate")){
-            if(!receiver.isAlive()){
+        if (c.equals("selfUpdate")) {
+            if (!receiver.isAlive()) {
                 closeConnection();
             }
             receiver.stopReceiving();
+            String[] text = receiver.getText();
+            if (development) {
+                for (String s : text) sender.addText("Echo: " + s);
+                sender.send();
+            }
             process(receiver.getText());
             receiver.start();
-        }else if(c.equals("death")){
+        } else if (c.equals("death")) {
             closeConnection();
         }
     }

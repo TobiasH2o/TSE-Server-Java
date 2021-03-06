@@ -11,6 +11,7 @@ import java.util.Objects;
 public class ConnectionManager implements Runnable, ActionListener {
 
     private ServerSocket serverSocket;
+    private final boolean development;
 
     {
         try {
@@ -25,7 +26,8 @@ public class ConnectionManager implements Runnable, ActionListener {
     ArrayList<Integer> deadUsers = new ArrayList<>();
     Thread connector;
 
-    ConnectionManager() {
+    ConnectionManager(boolean development) {
+        this.development = development;
         Timer deathClock = new Timer(10, this);
         deathClock.setActionCommand("checkDead");
         deathClock.start();
@@ -53,7 +55,7 @@ public class ConnectionManager implements Runnable, ActionListener {
     public void run() {
         while (running)
             try {
-                if(!serverSocket.isClosed() && SQL.isRunning()) {
+                if(!serverSocket.isClosed() && (SQL.isRunning() || development)) {
                     removeDeadClients();
                     Socket clientSocket = serverSocket.accept();
                     boolean duplicate = false;
@@ -63,7 +65,7 @@ public class ConnectionManager implements Runnable, ActionListener {
                         }
                     }
                     if(!duplicate)
-                        addUser(new User(clientSocket));
+                        addUser(new User(clientSocket, development));
                 }
             } catch (IOException ignored) {}
     }
