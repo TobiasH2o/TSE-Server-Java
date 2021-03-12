@@ -1,12 +1,11 @@
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import javax.swing.*;
 import java.util.Objects;
 
 public class MainMenu{
 
+
     private boolean development = true;
     private final ConnectionManager cm;
+
 
     MainMenu() {
         Log.logLine("Looking for localHost SQL");
@@ -55,6 +54,7 @@ public class MainMenu{
         Log.logLine("Ending connections");
         System.exit(3);
     }
+
 
     public void subMenu() {
         boolean run = true;

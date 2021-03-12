@@ -4,4 +4,5 @@ public class Runner {
         Log.logLine("Starting message server");
         MainMenu mm = new MainMenu();
     }
+
 }

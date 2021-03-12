@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -5,8 +6,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Arrays;
-import javax.swing.Timer;
 
 public class User implements ActionListener {
 
@@ -48,9 +47,11 @@ public class User implements ActionListener {
             if (com.checkUser(userName, password)) {
                 loggedOn = true;
                 com.userOnline();
-                sender.addText("confirmLog");
-                sender.send();
+                sender.addText("goodLog");
+            }else{
+                sender.addText("badLog");
             }
+            sender.send();
         }
     }
 
@@ -83,10 +84,15 @@ public class User implements ActionListener {
     }
 
     public void process(String[] text) {
+        String key;
+        String data;
         if (text.length > 0) {
             deathTimer.restart();
         }
-        for (String data : text) {
+        for (String info : text) {
+            key = info.split("")[0];
+            data = info.replaceFirst(key, "");
+            Log.logLine(data);
             if (!loggedOn) {
                 if (data.startsWith("U")) {
                     userName = data.replaceFirst("U", "");

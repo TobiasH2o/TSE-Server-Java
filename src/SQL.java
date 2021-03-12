@@ -9,8 +9,7 @@ public class SQL {
     private final String url = "jdbc:mysql://localhost:3306";
     static private boolean running = false;
 
-    SQL(){
-    }
+    SQL(){ }
 
     public void checkServerStatus(){
         try {
